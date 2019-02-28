@@ -17,11 +17,11 @@
     "parcel-plugin-static-files-copy": "^2.5.0"
   },
   "browserslist": [
-    "since 2017-06"
+    ""
   ],
   "newline": {
     "codesandbox": {
-      "id": "https://codesandbox.io/s/cjm5s"
+      "id": ""
     }
   },
   "staticFiles": {
@@ -33,5 +33,5 @@
     ]
   },
   "keywords": [],
-  "title": "Module 1, Lesson 2: Loading the weather dataset"
+  "title": ""
 }
