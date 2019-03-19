@@ -26,6 +26,10 @@ async function drawLineChart() {
     - dimensions.margin.top
     - dimensions.margin.bottom
 
+  // 3. Draw canvas
+
+  const wrapper = d3.select("#wrapper")
+
 }
 
 drawLineChart()
