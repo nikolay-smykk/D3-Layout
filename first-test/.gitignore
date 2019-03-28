@@ -1,2 +1,4 @@
 node_modules
 first-test/package.json
+dist
+.cache
