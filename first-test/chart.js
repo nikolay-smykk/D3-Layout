@@ -33,6 +33,13 @@ async function drawLineChart() {
       .attr("width", dimensions.width)
       .attr("height", dimensions.height)
 
+  const bounds = wrapper.append("g")
+      .style("transform", `translate(${
+        dimensions.margin.left
+      }px, ${
+        dimensions.margin.top
+      }px)`)
+
 }
 
 drawLineChart()
