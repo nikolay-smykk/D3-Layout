@@ -1,7 +1,9 @@
 import * as d3 from "d3";
 
 async function drawLineChart() {
-  const dataset = await d3.json("./data/my_weather_data.json");
+
+  // 1. Access data
+  const dataset = await d3.json("./data/my_weather_data.json")
 
   const yAccessor = d => d.temperatureMax
   const dateParser = d3.timeParse("%Y-%m-%d")
@@ -71,6 +73,21 @@ async function drawLineChart() {
       .attr("stroke", "#af9358")
       .attr("stroke-width", 2)
 
-}
+  // 6. Draw peripherals
 
+  const yAxisGenerator = d3.axisLeft()
+    .scale(yScale)
+
+  const yAxis = bounds.append("g")
+    .call(yAxisGenerator)
+
+  const xAxisGenerator = d3.axisBottom()
+    .scale(xScale)
+
+  const xAxis = bounds.append("g")
+    .call(xAxisGenerator)
+      .style("transform", `translateY(${
+        dimensions.boundedHeight
+      }px)`)
+}
 drawLineChart()
