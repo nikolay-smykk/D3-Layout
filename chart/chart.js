@@ -57,5 +57,14 @@ async function drawScatter() {
     .range([dimensions.boundedHeight, 0])
     .nice()
 
+  // 5. Draw data
+
+  const dots = bounds.selectAll("circle")
+    .data(dataset)
+    .enter().append("circle")
+      .attr("cx", d => xScale(xAccessor(d)))
+      .attr("cy", d => yScale(yAccessor(d)))
+      .attr("r", 4)
+
 }
 drawScatter()
