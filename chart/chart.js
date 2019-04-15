@@ -45,5 +45,17 @@ async function drawScatter() {
         dimensions.margin.top
       }px)`)
 
+  // 4. Create scales
+
+  const xScale = d3.scaleLinear()
+    .domain(d3.extent(dataset, xAccessor))
+    .range([0, dimensions.boundedWidth])
+    .nice()
+
+  const yScale = d3.scaleLinear()
+    .domain(d3.extent(dataset, yAccessor))
+    .range([dimensions.boundedHeight, 0])
+    .nice()
+
 }
 drawScatter()
