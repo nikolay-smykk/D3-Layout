@@ -62,6 +62,7 @@ async function drawBars() {
     .nice()
 
   // 5. Draw data
+
   const binsGroup = bounds.append("g")
 
   const binGroups = binsGroup.selectAll("g")
