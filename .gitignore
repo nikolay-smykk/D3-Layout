@@ -1,5 +1,3 @@
-
-first-test/package.json
-first-test/package.json
-first-test/node_modules/.bin/ansi-to-html
-first-test/.cache/70/ab7870ce8bd517ef57217cb0eab907.json
+node_modules
+.cache
+package.json
