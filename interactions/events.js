@@ -29,5 +29,12 @@ async function createEvent() {
     selection.attr("fill", "lightgrey")
   })
 
+  setTimeout(() => {
+    rects
+      .dispatch("mouseleave")
+      .on("mouseenter", null)
+      .on("mouseleave", null)
+  }, 3000)
+
 }
 createEvent()
