@@ -2,12 +2,20 @@
 <html lang="en">
     <head>
         <link rel="stylesheet" href="./styles.css"></link>
-        <title>My Updating Chart</title>
+        <title>My Histogram</title>
     </head>
     <body>
-        <svg height="200" width="500" id="svg"></svg>
+        <div id="wrapper" class="wrapper">
+            <div id="tooltip" class="tooltip">
+                <div class="tooltip-range">
+                    Humidity: <span id="range"></span>
+                </div>
+                <div class="tooltip-value">
+                    <span id="count"></span> days
+                </div>
+            </div>
+        </div>
 
-        <script src="./events.js"></script>
+        <script src="./chart.js"></script>
     </body>
-
 </html>
