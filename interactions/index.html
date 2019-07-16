@@ -2,18 +2,23 @@
 <html lang="en">
     <head>
         <link rel="stylesheet" href="./styles.css"></link>
-        <title>My Histogram</title>
+        <title>My Scatterplot</title>
     </head>
     <body>
         <div id="wrapper" class="wrapper">
+
             <div id="tooltip" class="tooltip">
-                <div class="tooltip-range">
-                    Humidity: <span id="range"></span>
+                <div class="tooltip-date">
+                    <span id="date"></span>
                 </div>
-                <div class="tooltip-value">
-                    <span id="count"></span> days
+                <div class="tooltip-humidity">
+                    Humidity: <span id="humidity"></span>
+                </div>
+                <div class="tooltip-dew-point">
+                    Dew Point: <span id="dew-point"></span>
                 </div>
             </div>
+
         </div>
 
         <script src="./chart.js"></script>

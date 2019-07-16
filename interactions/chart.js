@@ -1,21 +1,24 @@
 import * as d3 from "d3";
 
-async function drawBars() {
+async function drawScatter() {
 
   // 1. Access data
-  const dataset = await d3.json("./data/my_weather_data.json")
+  let dataset = await d3.json("./data/my_weather_data.json")
 
-  const metricAccessor = d => d.humidity
-  const yAccessor = d => d.length
+  const xAccessor = d => d.dewPoint
+  const yAccessor = d => d.humidity
 
   // 2. Create chart dimensions
 
-  const width = 600
+  const width = d3.min([
+    window.innerWidth * 0.9,
+    window.innerHeight * 0.9,
+  ])
   let dimensions = {
     width: width,
-    height: width * 0.6,
+    height: width,
     margin: {
-      top: 30,
+      top: 10,
       right: 10,
       bottom: 50,
       left: 50,
@@ -45,69 +48,24 @@ async function drawBars() {
   // 4. Create scales
 
   const xScale = d3.scaleLinear()
-    .domain(d3.extent(dataset, metricAccessor))
+    .domain(d3.extent(dataset, xAccessor))
     .range([0, dimensions.boundedWidth])
     .nice()
 
-  const binsGenerator = d3.bin()
-    .domain(xScale.domain())
-    .value(metricAccessor)
-    .thresholds(12)
-
-  const bins = binsGenerator(dataset)
-
   const yScale = d3.scaleLinear()
-    .domain([0, d3.max(bins, yAccessor)])
+    .domain(d3.extent(dataset, yAccessor))
     .range([dimensions.boundedHeight, 0])
     .nice()
 
   // 5. Draw data
 
-  const binsGroup = bounds.append("g")
-
-  const binGroups = binsGroup.selectAll("g")
-    .data(bins)
-    .join("g")
-
-  const barPadding = 1
-  const barRects = binGroups.append("rect")
-      .attr("x", d => xScale(d.x0) + barPadding / 2)
-      .attr("y", d => yScale(yAccessor(d)))
-      .attr("width", d => d3.max([
-        0,
-        xScale(d.x1) - xScale(d.x0) - barPadding
-      ]))
-      .attr("height", d => dimensions.boundedHeight
-        - yScale(yAccessor(d))
-      )
-      .attr("fill", "cornflowerblue")
-
-  const barText = binGroups.filter(yAccessor)
-    .append("text")
-      .attr("x", d => xScale(d.x0) + (xScale(d.x1) - xScale(d.x0)) / 2)
-      .attr("y", d => yScale(yAccessor(d)) - 5)
-      .text(yAccessor)
-      .style("text-anchor", "middle")
-      .attr("fill", "darkgrey")
-      .style("font-size", "12px")
-      .style("font-family", "sans-serif")
-
-  const mean = d3.mean(dataset, metricAccessor)
-  const meanLine = bounds.append("line")
-      .attr("x1", xScale(mean))
-      .attr("x2", xScale(mean))
-      .attr("y1", -15)
-      .attr("y2", dimensions.boundedHeight)
-      .attr("stroke", "maroon")
-      .attr("stroke-dasharray", "2px 4px")
-
-  const meanLabel = bounds.append("text")
-      .attr("x", xScale(mean))
-      .attr("y", -20)
-      .text("mean")
-      .attr("fill", "maroon")
-      .style("font-size", "12px")
-      .style("text-anchor", "middle")
+  const dots = bounds.selectAll("circle")
+    .data(dataset)
+    .join("circle")
+      .attr("cx", d => xScale(xAccessor(d)))
+      .attr("cy", d => yScale(yAccessor(d)))
+      .attr("r", 4)
+      .attr("tabindex", "0")
 
   // 6. Draw peripherals
 
@@ -119,33 +77,67 @@ async function drawBars() {
       .style("transform", `translateY(${dimensions.boundedHeight}px)`)
 
   const xAxisLabel = xAxis.append("text")
+      .attr("class", "x-axis-label")
       .attr("x", dimensions.boundedWidth / 2)
       .attr("y", dimensions.margin.bottom - 10)
-      .attr("fill", "black")
-      .style("font-size", "1.4em")
-      .text("Humidity")
-      .style("text-transform", "capitalize")
+      .html("Dew point (&deg;F)")
 
-  // 7. Create interactions
+  const yAxisGenerator = d3.axisLeft()
+    .scale(yScale)
+    .ticks(4)
 
-  binGroups.select("rect")
+  const yAxis = bounds.append("g")
+      .call(yAxisGenerator)
+
+  const yAxisLabel = yAxis.append("text")
+      .attr("class", "y-axis-label")
+      .attr("x", -dimensions.boundedHeight / 2)
+      .attr("y", -dimensions.margin.left + 10)
+      .text("Relative humidity")
+
+  // 7. Set up interactions
+
+  const delaunay = d3.Delaunay.from(
+    dataset,
+    d => xScale(xAccessor(d)),
+    d => yScale(yAccessor(d)),
+  )
+  const voronoi = delaunay.voronoi()
+  voronoi.xmax = dimensions.boundedWidth
+  voronoi.ymax = dimensions.boundedHeight
+
+  bounds.selectAll(".voronoi")
+    .data(dataset)
+    .join("path")
+      .attr("class", "voronoi")
+      .attr("d", (d,i) => voronoi.renderCell(i))
       .on("mouseenter", onMouseEnter)
       .on("mouseleave", onMouseLeave)
 
   const tooltip = d3.select("#tooltip")
   function onMouseEnter(event, d) {
-    tooltip.select("#count")
-        .text(yAccessor(d))
+    const dayDot = bounds.append("circle")
+        .attr("class", "tooltipDot")
+        .attr("cx", xScale(xAccessor(d)))
+        .attr("cy", yScale(yAccessor(d)))
+        .attr("r", 7)
+        .style("fill", "maroon")
+        .style("pointer-events", "none")
 
     const formatHumidity = d3.format(".2f")
-    tooltip.select("#range")
-        .text([
-          formatHumidity(d.x0),
-          formatHumidity(d.x1)
-        ].join(" - "))
+    tooltip.select("#humidity")
+        .text(formatHumidity(yAccessor(d)))
 
-    const x = xScale(d.x0)
-      + (xScale(d.x1) - xScale(d.x0)) / 2
+    const formatDewPoint = d3.format(".2f")
+    tooltip.select("#dew-point")
+        .text(formatDewPoint(xAccessor(d)))
+
+    const dateParser = d3.timeParse("%Y-%m-%d")
+    const formatDate = d3.timeFormat("%B %A %-d, %Y")
+    tooltip.select("#date")
+        .text(formatDate(dateParser(d.date)))
+
+    const x = xScale(xAccessor(d))
       + dimensions.margin.left
     const y = yScale(yAccessor(d))
       + dimensions.margin.top
@@ -159,7 +151,11 @@ async function drawBars() {
   }
 
   function onMouseLeave() {
+    d3.selectAll(".tooltipDot")
+      .remove()
+
     tooltip.style("opacity", 0)
   }
+
 }
-drawBars()
+drawScatter()
