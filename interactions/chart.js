@@ -1,27 +1,24 @@
 import * as d3 from "d3";
 
-async function drawScatter() {
+async function drawLineChart() {
 
   // 1. Access data
-  let dataset = await d3.json("./data/my_weather_data.json")
+  const dataset = await d3.json("./data/my_weather_data.json")
 
-  const xAccessor = d => d.dewPoint
-  const yAccessor = d => d.humidity
+  const yAccessor = d => d.temperatureMax
+  const dateParser = d3.timeParse("%Y-%m-%d")
+  const xAccessor = d => dateParser(d.date)
 
   // 2. Create chart dimensions
 
-  const width = d3.min([
-    window.innerWidth * 0.9,
-    window.innerHeight * 0.9,
-  ])
   let dimensions = {
-    width: width,
-    height: width,
+    width: window.innerWidth * 0.9,
+    height: 400,
     margin: {
-      top: 10,
-      right: 10,
-      bottom: 50,
-      left: 50,
+      top: 15,
+      right: 15,
+      bottom: 40,
+      left: 60,
     },
   }
   dimensions.boundedWidth = dimensions.width
@@ -47,99 +44,90 @@ async function drawScatter() {
 
   // 4. Create scales
 
-  const xScale = d3.scaleLinear()
-    .domain(d3.extent(dataset, xAccessor))
-    .range([0, dimensions.boundedWidth])
-    .nice()
-
   const yScale = d3.scaleLinear()
     .domain(d3.extent(dataset, yAccessor))
     .range([dimensions.boundedHeight, 0])
-    .nice()
+
+  const freezingTemperaturePlacement = yScale(32)
+  const freezingTemperatures = bounds.append("rect")
+      .attr("x", 0)
+      .attr("width", dimensions.boundedWidth)
+      .attr("y", freezingTemperaturePlacement)
+      .attr("height", dimensions.boundedHeight
+        - freezingTemperaturePlacement)
+      .attr("fill", "#e0f3f3")
+
+  const xScale = d3.scaleTime()
+    .domain(d3.extent(dataset, xAccessor))
+    .range([0, dimensions.boundedWidth])
 
   // 5. Draw data
 
-  const dots = bounds.selectAll("circle")
-    .data(dataset)
-    .join("circle")
-      .attr("cx", d => xScale(xAccessor(d)))
-      .attr("cy", d => yScale(yAccessor(d)))
-      .attr("r", 4)
-      .attr("tabindex", "0")
+  const lineGenerator = d3.line()
+    .x(d => xScale(xAccessor(d)))
+    .y(d => yScale(yAccessor(d)))
+
+  const line = bounds.append("path")
+      .attr("d", lineGenerator(dataset))
+      .attr("fill", "none")
+      .attr("stroke", "#af9358")
+      .attr("stroke-width", 2)
 
   // 6. Draw peripherals
+
+  const yAxisGenerator = d3.axisLeft()
+    .scale(yScale)
+
+  const yAxis = bounds.append("g")
+    .call(yAxisGenerator)
 
   const xAxisGenerator = d3.axisBottom()
     .scale(xScale)
 
   const xAxis = bounds.append("g")
     .call(xAxisGenerator)
-      .style("transform", `translateY(${dimensions.boundedHeight}px)`)
-
-  const xAxisLabel = xAxis.append("text")
-      .attr("class", "x-axis-label")
-      .attr("x", dimensions.boundedWidth / 2)
-      .attr("y", dimensions.margin.bottom - 10)
-      .html("Dew point (&deg;F)")
-
-  const yAxisGenerator = d3.axisLeft()
-    .scale(yScale)
-    .ticks(4)
-
-  const yAxis = bounds.append("g")
-      .call(yAxisGenerator)
-
-  const yAxisLabel = yAxis.append("text")
-      .attr("class", "y-axis-label")
-      .attr("x", -dimensions.boundedHeight / 2)
-      .attr("y", -dimensions.margin.left + 10)
-      .text("Relative humidity")
+      .style("transform", `translateY(${
+        dimensions.boundedHeight
+      }px)`)
 
   // 7. Set up interactions
 
-  const delaunay = d3.Delaunay.from(
-    dataset,
-    d => xScale(xAccessor(d)),
-    d => yScale(yAccessor(d)),
-  )
-  const voronoi = delaunay.voronoi()
-  voronoi.xmax = dimensions.boundedWidth
-  voronoi.ymax = dimensions.boundedHeight
-
-  bounds.selectAll(".voronoi")
-    .data(dataset)
-    .join("path")
-      .attr("class", "voronoi")
-      .attr("d", (d,i) => voronoi.renderCell(i))
-      .on("mouseenter", onMouseEnter)
-      .on("mouseleave", onMouseLeave)
+  const listeningRect = bounds.append("rect")
+    .attr("class", "listening-rect")
+    .attr("width", dimensions.boundedWidth)
+    .attr("height", dimensions.boundedHeight)
+    .on("mousemove", onMouseMove)
+    .on("mouseleave", onMouseLeave)
 
   const tooltip = d3.select("#tooltip")
-  function onMouseEnter(event, d) {
-    const dayDot = bounds.append("circle")
-        .attr("class", "tooltipDot")
-        .attr("cx", xScale(xAccessor(d)))
-        .attr("cy", yScale(yAccessor(d)))
-        .attr("r", 7)
-        .style("fill", "maroon")
-        .style("pointer-events", "none")
+  const tooltipCircle = bounds.append("circle")
+      .attr("class", "tooltip-circle")
+      .attr("r", 4)
 
-    const formatHumidity = d3.format(".2f")
-    tooltip.select("#humidity")
-        .text(formatHumidity(yAccessor(d)))
+  function onMouseMove(event) {
+    const mousePosition = d3.pointer(event)
+    const hoveredDate = xScale.invert(mousePosition[0])
 
-    const formatDewPoint = d3.format(".2f")
-    tooltip.select("#dew-point")
-        .text(formatDewPoint(xAccessor(d)))
+    const getDistanceFromHoveredDate = d => Math.abs(xAccessor(d) - hoveredDate)
+    const closestIndex = d3.leastIndex(dataset, (a, b) => (
+      getDistanceFromHoveredDate(a) - getDistanceFromHoveredDate(b)
+    ))
+    const closestDataPoint = dataset[closestIndex]
 
-    const dateParser = d3.timeParse("%Y-%m-%d")
+    const closestXValue = xAccessor(closestDataPoint)
+    const closestYValue = yAccessor(closestDataPoint)
+
     const formatDate = d3.timeFormat("%B %A %-d, %Y")
     tooltip.select("#date")
-        .text(formatDate(dateParser(d.date)))
+        .text(formatDate(closestXValue))
 
-    const x = xScale(xAccessor(d))
+    const formatTemperature = d => `${d3.format(".1f")(d)}°F`
+    tooltip.select("#temperature")
+        .html(formatTemperature(closestYValue))
+
+    const x = xScale(closestXValue)
       + dimensions.margin.left
-    const y = yScale(yAccessor(d))
+    const y = yScale(closestYValue)
       + dimensions.margin.top
 
     tooltip.style("transform", `translate(`
@@ -148,14 +136,18 @@ async function drawScatter() {
       + `)`)
 
     tooltip.style("opacity", 1)
+
+    tooltipCircle
+        .attr("cx", xScale(closestXValue))
+        .attr("cy", yScale(closestYValue))
+        .style("opacity", 1)
   }
 
   function onMouseLeave() {
-    d3.selectAll(".tooltipDot")
-      .remove()
-
     tooltip.style("opacity", 0)
+
+    tooltipCircle.style("opacity", 0)
   }
 
 }
-drawScatter()
+drawLineChart()
