@@ -132,6 +132,13 @@ async function drawChart() {
 
   // 5. Draw data
 
+  const containsFreezing = radiusScale.domain()[0] < 32
+  if (containsFreezing) {
+    const freezingCircle = bounds.append("circle")
+      .attr("r", radiusScale(32))
+      .attr("class", "freezing-circle")
+  }
+
 
   // 7. Set up interactions
 
