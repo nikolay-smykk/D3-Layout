@@ -92,6 +92,11 @@ async function drawChart() {
     )[1]
   )
 
+  // make sure to use a sqrt scale for circle areas
+  const cloudRadiusScale = d3.scaleSqrt()
+    .domain(d3.extent(dataset, cloudAccessor))
+    .range([1, 10])
+
   // 6. Draw peripherals
 
   const peripherals = bounds.append("g")
@@ -172,6 +177,16 @@ async function drawChart() {
       .attr("x2", d => getXFromDataPoint(d, uvOffset + 0.1))
       .attr("y1", d => getYFromDataPoint(d, uvOffset))
       .attr("y2", d => getYFromDataPoint(d, uvOffset + 0.1))
+
+  const cloudGroup = bounds.append("g")
+  const cloudOffset = 1.27
+  const cloudDots = cloudGroup.selectAll("circle")
+    .data(dataset)
+    .join("circle")
+      .attr("class", "cloud-dot")
+      .attr("cx", d => getXFromDataPoint(d, cloudOffset))
+      .attr("cy", d => getYFromDataPoint(d, cloudOffset))
+      .attr("r", d => cloudRadiusScale(cloudAccessor(d)))
 
   // 7. Set up interactions
 
