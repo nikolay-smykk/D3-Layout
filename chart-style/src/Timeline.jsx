@@ -12,8 +12,22 @@ const formatDate = d3.timeFormat("%-b %-d")
 const Timeline = ({ data, xAccessor, yAccessor, label }) => {
   const [ref, dms] = useChartDimensions()
 
+  const xScale = d3.scaleTime()
+    .domain(d3.extent(data, xAccessor))
+    .range([0, dms.boundedWidth])
+
+  const yScale = d3.scaleLinear()
+    .domain(d3.extent(data, yAccessor))
+    .range([dms.boundedHeight, 0])
+    .nice()
+
+  const xAccessorScaled = d => xScale(xAccessor(d))
+  const yAccessorScaled = d => yScale(yAccessor(d))
+
   return (
     <div className="Timeline" ref={ref}>
+      <Chart dimensions={dms}>
+      </Chart>
     </div>
   )
 }
