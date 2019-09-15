@@ -32,6 +32,14 @@ const Timeline = ({ data, xAccessor, yAccessor, label }) => {
           xAccessor={xAccessorScaled}
           yAccessor={yAccessorScaled}
         />
+        <Axis
+          dimension="x"
+          scale={xScale}
+        />
+        <Axis
+          dimension="y"
+          scale={yScale}
+        />
       </Chart>
     </div>
   )
