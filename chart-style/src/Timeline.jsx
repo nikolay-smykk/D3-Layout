@@ -27,6 +27,11 @@ const Timeline = ({ data, xAccessor, yAccessor, label }) => {
   return (
     <div className="Timeline" ref={ref}>
       <Chart dimensions={dms}>
+        <Line
+          data={data}
+          xAccessor={xAccessorScaled}
+          yAccessor={yAccessorScaled}
+        />
       </Chart>
     </div>
   )
